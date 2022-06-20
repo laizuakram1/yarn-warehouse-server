@@ -21,14 +21,23 @@ async function run() {
 
     await client.connect();
     const yarnCollection = client.db("AllYarns").collection("yarn");
+    const reviewCollection = client.db("ReviewCollection").collection("reviews");
 
 
     //get all yarns
-    app.get('/yarns', async(req, res) =>{
+    app.get('/products', async(req, res) =>{
         const query ={};
         const result = await yarnCollection.find(query).toArray();
 
         res.send(result);
+    })
+
+    //get all reviews
+    app.get('/reviews', async (req, res) =>{
+      const query = {};
+      const result = await reviewCollection.find(query).toArray();
+
+      res.send(result);
     })
     
 
