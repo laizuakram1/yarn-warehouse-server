@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 //middle ware3
@@ -21,25 +21,43 @@ async function run() {
 
     await client.connect();
     const yarnCollection = client.db("AllYarns").collection("yarn");
+    const purchaseCollection = client.db("AllYarns").collection("purchase");
     const reviewCollection = client.db("ReviewCollection").collection("reviews");
 
 
     //get all yarns
-    app.get('/products', async(req, res) =>{
-        const query ={};
-        const result = await yarnCollection.find(query).toArray();
+    app.get('/products', async (req, res) => {
+      const query = {};
+      const result = await yarnCollection.find(query).toArray();
 
-        res.send(result);
+      res.send(result);
+    })
+
+    //get single yarns
+    app.get('/products/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await yarnCollection.findOne(query);
+
+      res.send(result);
     })
 
     //get all reviews
-    app.get('/reviews', async (req, res) =>{
+    app.get('/reviews', async (req, res) => {
       const query = {};
       const result = await reviewCollection.find(query).toArray();
 
       res.send(result);
     })
-    
+
+    //post purchase information
+    app.post('/purchase', async(req, res) =>{
+      const data = req.body;
+      const result = await purchaseCollection.insertOne(data);
+
+      res.send(result);
+    })
+
 
   } finally {
     // await client.close();
@@ -51,9 +69,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Hello from laizu yarn')
-  })
-  
-  app.listen(port, () => {
-    console.log(` laizu yarn listening on port ${port}`)
-  })
+  res.send('Hello from laizu yarn')
+})
+
+app.listen(port, () => {
+  console.log(` laizu yarn listening on port ${port}`)
+})
