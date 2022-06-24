@@ -63,9 +63,16 @@ async function run() {
 
       res.send(result);
     })
+    //post review
+    app.post('/reviews',async (req, res) =>{
+       const review = req.body;
+       const result = await reviewCollection.insertOne(review);
+
+       res.send(result)
+    })
 
     //get all reviews
-    app.get('/reviews', verifyJWT, async (req, res) => {
+    app.get('/reviews', async (req, res) => {
       const query = {};
       const result = await reviewCollection.find(query).toArray();
 
