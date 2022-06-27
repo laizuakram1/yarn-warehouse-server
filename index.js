@@ -110,11 +110,37 @@ async function run() {
       res.send(result);
     })
 
+     //get signle purchase / orders
+     app.get('/purchase/:id', async (req, res) =>{
+      const id = req.params.id;
+      const query = {_id:ObjectId(id)}
+      const result = await purchaseCollection.findOne(query)
+      res.send(result);
+    })
+
+
     //delete signle purchase / orders
     app.delete('/purchase/:id', async (req, res) =>{
       const id = req.params.id;
       const query = {_id:ObjectId(id)}
       const result = await purchaseCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    //GET ALL USERS
+    app.get('/users', async(req, res)=>{
+      const users = await usersCollection.find().toArray();
+      res.send(users);
+    })
+
+    //set uer role and make admin
+    app.put('/user/admin/:email', async(req, res) =>{
+      const email = req.params.email;
+      const filter = {email:email};
+      const updateDoc = {
+        $set:{role:'admin'}
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
 
@@ -137,6 +163,7 @@ async function run() {
     
     })
 
+    
     //post user profile info
     app.post('/profile', async(req, res) =>{
      const data = req.body;
