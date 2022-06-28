@@ -28,6 +28,7 @@ async function run() {
     const BuyerCollection = client.db("AllYarns").collection("buyer");
     const profileCollection = client.db("AllYarns").collection("profile");
     const reviewCollection = client.db("ReviewCollection").collection("reviews");
+    const messageCollection = client.db("AllYarns").collection("messages");
 
     //verify jwt token
     // function verifyJWT(req, res, next) {
@@ -103,6 +104,14 @@ async function run() {
       return res.send({success:true, result});
     })
 
+     //get signle purchase / orders
+     app.get('/purchase/:id', async (req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)}
+      const result = await purchaseCollection.findOne(query)
+      res.send(result);
+    })
+
     //get all purchase
     app.get('/purchase', async(req, res) =>{
       const query = {}
@@ -110,15 +119,7 @@ async function run() {
       res.send(result);
     })
 
-     //get signle purchase / orders
-     app.get('/purchase/:id', async (req, res) =>{
-      const id = req.params.id;
-      const query = {_id:ObjectId(id)}
-      const result = await purchaseCollection.findOne(query)
-      res.send(result);
-    })
-
-
+    
     //delete signle purchase / orders
     app.delete('/purchase/:id', async (req, res) =>{
       const id = req.params.id;
@@ -145,7 +146,6 @@ async function run() {
     })
 
 
-
     //update single user
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
@@ -166,8 +166,14 @@ async function run() {
     
     //post user profile info
     app.post('/profile', async(req, res) =>{
-     const data = req.body;
-      const result = await profileCollection.insertMany(data)
+      const order = req.body;
+      const query =  {product:order.product }
+      const exist = await profileCollection.findOne(query)
+      
+      if(exist){
+        return res.send({ success: false, booking: exist })
+      }
+      const result = await profileCollection.insertOne(order);
       res.send(result);
     })
 
@@ -175,6 +181,13 @@ async function run() {
     app.get('/buyer', async (req, res) =>{
       const query = {}
       const result = await BuyerCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    //post user message and email
+    app.post('/message', async(req, res) =>{
+      const data = req.body;
+      const result = await messageCollection.insertOne(data);
       res.send(result);
     })
 
