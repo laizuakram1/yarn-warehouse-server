@@ -1,4 +1,5 @@
 const express = require('express');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -49,15 +50,42 @@ async function run() {
       });
     }
 
+      // (GET)Get A Admin
+      app.get('/useadmin/:email',async(req,res)=>{
+        const email=req.params.email;
+        const user=await userCollection.findOne({email:email});
+        const isAdmin=user.role==='admin';
+        res.send({admin:isAdmin});
+    })
+    
+
+    //post payment card intend
+    app.post('/create-payment-intent', async(req, res) =>{
+      const order = req.body;
+      const price = order.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount:amount,
+        currency:'usd',
+        payment_method_types:['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+        
+      });
+      console.log(clientSecret);
+    })
+
+
     //post new products
-    app.post('/product', verifyJWT, async (req, res) =>{
+    app.post('/product', async (req, res) =>{
       const data = req.body;
       const result = await yarnCollection.insertOne(data);
       res.send(result);
     })
 
     //get all yarns
-    app.get('/products', verifyJWT, async (req, res) => {
+    app.get('/products', async (req, res) => {
       const query = {};
       const result = await yarnCollection.find(query).toArray();
 
@@ -73,7 +101,7 @@ async function run() {
       res.send(result);
     })
     //post review
-    app.post('/reviews',async (req, res) =>{
+    app.post('/review',async (req, res) =>{
        const review = req.body;
        const result = await reviewCollection.insertOne(review);
 
@@ -81,19 +109,26 @@ async function run() {
     })
 
     //get all reviews
-    app.get('/reviews', verifyJWT, async (req, res) => {
+    app.get('/reviews', async (req, res) => {
       const query = {};
       const result = await reviewCollection.find(query).toArray();
 
       res.send(result);
     })
     //get all orders
-    app.get('/purchase/:email', async (req, res) => {
+    app.get('/purchase/:email', verifyJWT, async (req, res) => {
       const email = req.params.email
-      const query = { email: email }
+      const decodedEmail = req.decoded.email;
+      if(decodedEmail == email){
+        const query = { email: email }
       const result = await purchaseCollection.find(query);
-
       res.send(result);
+      }
+      else{
+        return res.status(403).send({ message: "Not allow to access" });
+      }
+      
+      
     })
 
     //save purchase order list
@@ -121,7 +156,7 @@ async function run() {
     })
 
     //get all purchase
-    app.get('/purchase', verifyJWT, async(req, res) =>{
+    app.get('/purchase', async(req, res) =>{
       const query = {}
       const result = await purchaseCollection.find(query).toArray();
       res.send(result);
@@ -137,7 +172,7 @@ async function run() {
     })
 
     //GET ALL USERS
-    app.get('/users', verifyJWT, async(req, res)=>{
+    app.get('/users', async(req, res)=>{
       const users = await usersCollection.find().toArray();
       res.send(users);
     })
